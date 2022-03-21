@@ -20,8 +20,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.catalina.User;
+import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +62,17 @@ public class UserController {
 
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
+
+  @GetMapping(path = "/firstName/{firstName}",
+      produces = {MediaType.APPLICATION_XML_VALUE,
+          MediaType.APPLICATION_JSON_VALUE})
+  public ResponseEntity<UserRest> getUserFirstName(@PathVariable("firstName") String firstName){
+    UserRest userRest = new UserRest();
+    UserDto userDto = userService.getUserByFirstName(firstName);
+    BeanUtils.copyProperties(userDto, userRest);
+    return ResponseEntity.status(HttpStatus.OK).body(userRest);
+  }
+
 
   @GetMapping
   public ResponseEntity<List<UserRest>> getAllUsers() {
