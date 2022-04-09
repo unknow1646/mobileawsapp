@@ -13,6 +13,7 @@ package com.example.mobilewebws.ui.controller;
  */
 
 import com.example.mobilewebws.service.UserService;
+import com.example.mobilewebws.servicebean.BeanService;
 import com.example.mobilewebws.shared.dto.UserDto;
 import com.example.mobilewebws.ui.model.request.UserDetailsRequestModel;
 import com.example.mobilewebws.ui.response.UserRest;
@@ -20,11 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.catalina.User;
-import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,9 +39,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "users")
-public class UserController {
+public class UserController implements BatchRequest {
 
   UserService userService;
+
+  @Autowired
+  @Qualifier("A")
+  BeanService beanServiceA;
+
+  @Autowired
+  @Qualifier("A")
+  BeanService beanServiceB;
 
   @Autowired
   public UserController(UserService userService){
@@ -63,22 +69,41 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 
-  @GetMapping(path = "/firstName/{firstName}",
-      produces = {MediaType.APPLICATION_XML_VALUE,
-          MediaType.APPLICATION_JSON_VALUE})
-  public ResponseEntity<UserRest> getUserFirstName(@PathVariable("firstName") String firstName){
-    UserRest userRest = new UserRest();
-    UserDto userDto = userService.getUserByFirstName(firstName);
-    BeanUtils.copyProperties(userDto, userRest);
-    return ResponseEntity.status(HttpStatus.OK).body(userRest);
+  @Override
+  public ResponseEntity<List<UserRest>> getUsersFirstName(@PathVariable("firstName") String firstName){
+    return ResponseEntity.status(HttpStatus.OK).body(
+        userService.getUsersByFirstName(firstName).stream().map(
+            userDto -> {
+              List<UserRest> userRestList = new ArrayList<>();
+              userRestList.add(UserRest.builder()
+                  .firstName(userDto.getFirstName())
+                  .lastName(userDto.getLastName())
+                  .email(userDto.getEmail())
+                  .userId(userDto.getUserId())
+                  .build());
+              return userRestList;
+            }
+        ).flatMap(List::stream).collect(Collectors.toList()));
   }
 
+  @GetMapping(path = "/beanA")
+  public ResponseEntity<String> getBeanA(){
+    beanServiceA.startBean();
+    beanServiceA.stopBean();
+    return ResponseEntity.status(HttpStatus.OK).body("Finalizado Bean A");
+  }
 
-  @GetMapping
-  public ResponseEntity<List<UserRest>> getAllUsers() {
+  @GetMapping(path = "/beanB")
+  public ResponseEntity<String> getBeanB(){
+    beanServiceB.startBean();
+    beanServiceB.stopBean();
+    return ResponseEntity.status(HttpStatus.OK).body("Finalizado Bean B");
+  }
 
+  public ResponseEntity<List<UserRest>> getAllUsers(@RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "limit", defaultValue = "25") int limit) {
     return ResponseEntity.status(HttpStatus.OK)
-    .body(userService.getUsers().stream().map(userDto -> {
+    .body(userService.getUsers(page, limit).stream().map(userDto -> {
       List<UserRest> response = new ArrayList<>();
       response.add(UserRest
           .builder()
@@ -92,10 +117,7 @@ public class UserController {
         .collect(Collectors.toList()));
   }
 
-  @PostMapping(produces = {MediaType.APPLICATION_XML_VALUE,
-      MediaType.APPLICATION_JSON_VALUE},
-      consumes = {MediaType.APPLICATION_XML_VALUE,
-      MediaType.APPLICATION_JSON_VALUE})
+  @Override
   public ResponseEntity<UserRest> registerUser(@RequestBody @Validated UserDetailsRequestModel userDetailsRequestModel){
 
     UserRest returnValue = new UserRest();
@@ -120,12 +142,10 @@ public class UserController {
       @RequestParam(required = false) String email){
 
     userService.updateUser(userId,name, email);
-
   }
 
   @DeleteMapping(path = "{userId}")
   public void deleteUser(@PathVariable("userId") String userId){
     userService.deleteUser(userId);
   }
-
 }

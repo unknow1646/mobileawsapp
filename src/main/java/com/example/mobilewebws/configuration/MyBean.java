@@ -1,8 +1,4 @@
-package com.example.mobilewebws.service;
-
-import com.example.mobilewebws.shared.dto.UserDto;
-import java.util.List;
-import org.springframework.security.core.userdetails.UserDetailsService;
+package com.example.mobilewebws.configuration;
 
 /*
  * Copyright 2021 MonetaGo, Inc. All Rights Reserved.
@@ -15,14 +11,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  * may be transmitted or redistributed to any person without MonetaGo, Inc.'s prior written
  * consent. This notice may not be deleted or modified without MonetaGo, Inc.'s consent.
  */
-public interface UserService extends UserDetailsService {
-
-  UserDto createUser(UserDto userDto);
-  UserDto getUserById(String userId) ;
-  UserDto getUser(String email);
-  List<UserDto> getUsers(int page, int limit);
-  List<UserDto> getUsersByFirstName(String firstName);
-  void deleteUser(String userId);
-  void updateUser(String userId, String name, String email);
+public class MyBean {
+    public MyBean(){
+      System.out.println(" INICIANDO BEAN DE PRUEBA ...");
+    }
 
 }

@@ -2,7 +2,6 @@ package com.example.mobilewebws.security;
 
 import com.example.mobilewebws.SpringApplicationContext;
 import com.example.mobilewebws.service.UserService;
-import com.example.mobilewebws.service.impl.UserServiceImpl;
 import com.example.mobilewebws.shared.dto.UserDto;
 import com.example.mobilewebws.ui.model.request.UserLoginRequestModel;
 import com.fasterxml.jackson.databind.ObjectMapper;

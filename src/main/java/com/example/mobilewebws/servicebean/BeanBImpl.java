@@ -1,8 +1,9 @@
-package com.example.mobilewebws.service;
+package com.example.mobilewebws.servicebean;
 
-import com.example.mobilewebws.shared.dto.UserDto;
-import java.util.List;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /*
  * Copyright 2021 MonetaGo, Inc. All Rights Reserved.
@@ -15,14 +16,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  * may be transmitted or redistributed to any person without MonetaGo, Inc.'s prior written
  * consent. This notice may not be deleted or modified without MonetaGo, Inc.'s consent.
  */
-public interface UserService extends UserDetailsService {
 
-  UserDto createUser(UserDto userDto);
-  UserDto getUserById(String userId) ;
-  UserDto getUser(String email);
-  List<UserDto> getUsers(int page, int limit);
-  List<UserDto> getUsersByFirstName(String firstName);
-  void deleteUser(String userId);
-  void updateUser(String userId, String name, String email);
+public class BeanBImpl implements BeanService{
 
+  Logger logger = LoggerFactory.getLogger(BeanBImpl.class);
+
+  @Override
+  public void startBean() {
+    logger.info(" Starting Bean B");
+
+  }
+
+  @Override
+  public void stopBean() {
+    logger.info(" Stopping Bean B");
+
+  }
 }

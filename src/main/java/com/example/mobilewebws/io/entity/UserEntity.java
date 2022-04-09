@@ -7,6 +7,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /*
  * Copyright 2021 MonetaGo, Inc. All Rights Reserved.
@@ -20,6 +23,9 @@ import javax.persistence.Table;
  * consent. This notice may not be deleted or modified without MonetaGo, Inc.'s consent.
  */
 @Table
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity(name = "users")
 public class UserEntity implements Serializable {
 

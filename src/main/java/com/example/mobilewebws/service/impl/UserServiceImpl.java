@@ -1,10 +1,10 @@
 package com.example.mobilewebws.service.impl;
 
-import com.example.mobilewebws.ui.repositories.UserRepository;
 import com.example.mobilewebws.io.entity.UserEntity;
 import com.example.mobilewebws.service.UserService;
 import com.example.mobilewebws.shared.Utils;
 import com.example.mobilewebws.shared.dto.UserDto;
+import com.example.mobilewebws.ui.repositories.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -86,6 +88,9 @@ public class UserServiceImpl implements UserService {
         }).orElseThrow(() -> new RuntimeException("User Not Found"));
   }
 
+
+
+  /*
   @Override
   public UserDto getUserByFirstName(String firstName) {
     return userRepository.findByFirstName(firstName)
@@ -95,6 +100,8 @@ public class UserServiceImpl implements UserService {
           return userDto;
         }).orElseThrow(() -> new RuntimeException("User Not Found"));
   }
+
+   */
 
   @Override
   public UserDto getUser(String email) {
@@ -108,9 +115,12 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public List<UserDto> getUsers() {
+  public List<UserDto> getUsers(int page, int limit) {
 
-    return userRepository.findAll().stream()
+    Pageable pageableRequest = PageRequest.of(page, limit);
+
+
+    return userRepository.findAll(pageableRequest).getContent().stream()
         .map(userEntity -> {
           List<UserDto> responseDto = new ArrayList<>(200);
           responseDto.add(UserDto.builder()
@@ -124,6 +134,21 @@ public class UserServiceImpl implements UserService {
           return responseDto;
         }).flatMap(List::stream).collect(Collectors.toList());
   }
+
+  @Override
+  public List<UserDto> getUsersByFirstName(String firstName) {
+    return userRepository.findByFirstName(firstName)
+      .stream().map(userEntity -> {
+    List<UserDto> userDtoList = new ArrayList<>();
+    userDtoList.add(UserDto.builder()
+        .firstName(userEntity.getFirstName())
+        .lastName(userEntity.getLastName())
+        .userId(userEntity.getUserId())
+        .email(userEntity.getEmail())
+        .build());
+    return userDtoList;
+  }).flatMap(List::stream).collect(Collectors.toList());
+}
 
   @Override
   @Transactional
