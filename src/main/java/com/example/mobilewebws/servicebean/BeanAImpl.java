@@ -2,8 +2,6 @@ package com.example.mobilewebws.servicebean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 /*
  * Copyright 2021 MonetaGo, Inc. All Rights Reserved.

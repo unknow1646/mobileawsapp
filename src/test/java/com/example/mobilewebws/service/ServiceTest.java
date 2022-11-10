@@ -12,14 +12,14 @@ package com.example.mobilewebws.service;
  * consent. This notice may not be deleted or modified without MonetaGo, Inc.'s consent.
  */
 
+import com.example.mobilewebws.internal.queryservice.InternalQuery;
 import com.example.mobilewebws.io.entity.UserEntity;
 import com.example.mobilewebws.service.impl.UserServiceImpl;
 import com.example.mobilewebws.shared.Utils;
 import com.example.mobilewebws.shared.dto.UserDto;
 import com.example.mobilewebws.ui.repositories.UserRepository;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import org.apache.catalina.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,8 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 @DisplayName("Financing Service Test")
 @ExtendWith(MockitoExtension.class)
@@ -39,23 +38,25 @@ public class ServiceTest {
   UserService userService;
   Utils utils;
   BCryptPasswordEncoder bCryptPasswordEncoder;
+  InternalQuery internalQuery;
 
   @Mock
   UserRepository userRepository;
 
   @BeforeEach
   public void setup() {
-     userService = new UserServiceImpl(userRepository, utils, bCryptPasswordEncoder);
+     userService = new UserServiceImpl(userRepository, utils, bCryptPasswordEncoder, internalQuery);
   }
 
 
   @Test
   void test(){
-    when(userRepository.findByFirstName(anyString())).thenReturn(List.of(UserEntity.builder()
-        .userId("userId")
+    List<UserEntity> userEntities = new ArrayList<>();
+    UserEntity hernan = UserEntity.builder()
         .firstName("Hernan")
-        .lastName("Diaz")
-        .build()));
+        .build();
+    userEntities.add(hernan);
+    doReturn(userEntities).when(userRepository).findByFirstName("Hernan");
     List<UserDto> usersByFirstName = userService.getUsersByFirstName("Hernan");
     assertEquals("Hernan", usersByFirstName.get(0).getFirstName());
   }

@@ -19,7 +19,7 @@ public class MobileWebWsApplication {
 
 	public static void main(String[] args) {
 		ConfigurableApplicationContext context = SpringApplication.run(MobileWebWsApplication.class, args);
-		BeanService beanService = context.getBean(BeanAImpl.class);
+		BeanService beanService = context.getBean(BeanBImpl.class);
 		beanService.startBean();
 		beanService.stopBean();
 

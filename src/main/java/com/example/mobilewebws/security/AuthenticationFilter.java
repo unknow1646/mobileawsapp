@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -65,7 +64,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
   protected void successfulAuthentication(HttpServletRequest req,
       HttpServletResponse res,
       FilterChain chain,
-      Authentication auth) throws IOException, ServletException {
+      Authentication auth) {
 
     String userName = ((User) auth.getPrincipal()).getUsername();
 
@@ -82,6 +81,5 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     res.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
     res.addHeader("UserId", user.getUserId());
     //res.addHeader("hola", user.getEmail());
-
   }
 }

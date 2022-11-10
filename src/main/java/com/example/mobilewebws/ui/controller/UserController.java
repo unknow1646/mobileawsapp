@@ -12,6 +12,9 @@ package com.example.mobilewebws.ui.controller;
  * consent. This notice may not be deleted or modified without MonetaGo, Inc.'s consent.
  */
 
+import com.example.mobilewebws.exceptions.IdNotFoundException;
+import com.example.mobilewebws.exceptions.SearchNamesNotFoundException;
+import com.example.mobilewebws.exceptions.UserServiceException;
 import com.example.mobilewebws.service.UserService;
 import com.example.mobilewebws.servicebean.BeanService;
 import com.example.mobilewebws.shared.dto.UserDto;
@@ -20,18 +23,16 @@ import com.example.mobilewebws.ui.response.UserRest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,7 +49,7 @@ public class UserController implements BatchRequest {
   BeanService beanServiceA;
 
   @Autowired
-  @Qualifier("A")
+  @Qualifier("B")
   BeanService beanServiceB;
 
   @Autowired
@@ -56,13 +57,12 @@ public class UserController implements BatchRequest {
     this.userService = userService;
   }
 
-  @GetMapping(path = "{userId}",
-      produces = {MediaType.APPLICATION_XML_VALUE,
-          MediaType.APPLICATION_JSON_VALUE})
+  @Override
   public ResponseEntity<UserRest> getUser(@PathVariable("userId") String userId) {
 
     UserRest response = new UserRest();
     UserDto userById = userService.getUserById(userId);
+    if (Objects.isNull(userById)) throw new UserServiceException("USER NOT FOUND");
     System.out.println(userById);
     BeanUtils.copyProperties(userById, response);
 
@@ -70,9 +70,20 @@ public class UserController implements BatchRequest {
   }
 
   @Override
+  public ResponseEntity<Long> getUserId(@PathVariable("firstName") String firstName){
+    Long userIdByName = userService.getUserIdByName(firstName);
+    return ResponseEntity.status(HttpStatus.OK).body(userIdByName);
+  }
+
+  @Override
   public ResponseEntity<List<UserRest>> getUsersFirstName(@PathVariable("firstName") String firstName){
+
+    List<UserDto> usersByFirstName = userService.getUsersByFirstName(firstName);
+    if(usersByFirstName.isEmpty())
+      throw new SearchNamesNotFoundException("NAME SEARCH NOT FOUND");
+
     return ResponseEntity.status(HttpStatus.OK).body(
-        userService.getUsersByFirstName(firstName).stream().map(
+        usersByFirstName.stream().map(
             userDto -> {
               List<UserRest> userRestList = new ArrayList<>();
               userRestList.add(UserRest.builder()
@@ -86,6 +97,7 @@ public class UserController implements BatchRequest {
         ).flatMap(List::stream).collect(Collectors.toList()));
   }
 
+  @Override
   @GetMapping(path = "/beanA")
   public ResponseEntity<String> getBeanA(){
     beanServiceA.startBean();
@@ -93,6 +105,7 @@ public class UserController implements BatchRequest {
     return ResponseEntity.status(HttpStatus.OK).body("Finalizado Bean A");
   }
 
+  @Override
   @GetMapping(path = "/beanB")
   public ResponseEntity<String> getBeanB(){
     beanServiceB.startBean();
@@ -100,6 +113,7 @@ public class UserController implements BatchRequest {
     return ResponseEntity.status(HttpStatus.OK).body("Finalizado Bean B");
   }
 
+  @Override
   public ResponseEntity<List<UserRest>> getAllUsers(@RequestParam(value = "page", defaultValue = "0") int page,
       @RequestParam(value = "limit", defaultValue = "25") int limit) {
     return ResponseEntity.status(HttpStatus.OK)
@@ -118,11 +132,16 @@ public class UserController implements BatchRequest {
   }
 
   @Override
-  public ResponseEntity<UserRest> registerUser(@RequestBody @Validated UserDetailsRequestModel userDetailsRequestModel){
+  public ResponseEntity<UserRest> registerUser(@RequestBody @Validated UserDetailsRequestModel userDetailsRequestModel) {
 
     UserRest returnValue = new UserRest();
     UserDto userDto = new UserDto();
-    BeanUtils.copyProperties(userDetailsRequestModel, userDto);
+
+    if(userDetailsRequestModel.getFirstName().isEmpty()){
+      throw new NullPointerException("The field first name is null");
+    }
+          BeanUtils.copyProperties(userDetailsRequestModel, userDto);
+
     System.out.println("uSER dto");
     System.out.println(userDto);
 
@@ -136,15 +155,17 @@ public class UserController implements BatchRequest {
     return ResponseEntity.status(HttpStatus.OK).body(returnValue);
   }
 
-  @PutMapping(path = "{userId}")
+  @Override
   public void updateUser(@PathVariable("userId") String userId,
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String email){
 
+    UserDto userById = userService.getUserById(userId);
+    if(Objects.isNull(userById)) throw new IdNotFoundException("USER DOESN'T EXIST");
     userService.updateUser(userId,name, email);
   }
 
-  @DeleteMapping(path = "{userId}")
+  @Override
   public void deleteUser(@PathVariable("userId") String userId){
     userService.deleteUser(userId);
   }

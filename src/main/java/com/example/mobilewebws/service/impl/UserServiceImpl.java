@@ -1,5 +1,8 @@
 package com.example.mobilewebws.service.impl;
 
+import com.example.mobilewebws.exceptions.IdNotFoundException;
+import com.example.mobilewebws.exceptions.UserServiceException;
+import com.example.mobilewebws.internal.queryservice.InternalQuery;
 import com.example.mobilewebws.io.entity.UserEntity;
 import com.example.mobilewebws.service.UserService;
 import com.example.mobilewebws.shared.Utils;
@@ -37,15 +40,17 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
   UserRepository userRepository;
+  InternalQuery internalQuery;
   Utils utils;
   BCryptPasswordEncoder bCryptPasswordEncoder;
 
   @Autowired
   public UserServiceImpl(UserRepository userRepository, Utils utils,
-      BCryptPasswordEncoder bCryptPasswordEncoder) {
+      BCryptPasswordEncoder bCryptPasswordEncoder, InternalQuery internalQuery) {
     this.userRepository = userRepository;
     this.utils = utils;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    this.internalQuery = internalQuery;
   }
 
   @Override
@@ -55,7 +60,7 @@ public class UserServiceImpl implements UserService {
     System.out.println("user by email " + userByEmail.toString());
 
     if (userByEmail.isPresent()) {
-      throw new RuntimeException("Email already exist");
+      throw new UserServiceException("Email already exist");
     }
 
     UserEntity userEntity = new UserEntity();
@@ -72,9 +77,7 @@ public class UserServiceImpl implements UserService {
 
     UserDto returnValue = new UserDto();
     BeanUtils.copyProperties(storedUserDatails, returnValue);
-
     return returnValue;
-
   }
 
   @Override
@@ -85,23 +88,8 @@ public class UserServiceImpl implements UserService {
           UserDto userDtox = new UserDto();
           BeanUtils.copyProperties(userEntity, userDtox);
           return userDtox;
-        }).orElseThrow(() -> new RuntimeException("User Not Found"));
+        }).orElseThrow(() -> new IdNotFoundException("User Not Found"));
   }
-
-
-
-  /*
-  @Override
-  public UserDto getUserByFirstName(String firstName) {
-    return userRepository.findByFirstName(firstName)
-        .map(userEntity -> {
-          UserDto userDto = new UserDto();
-          BeanUtils.copyProperties(userEntity, userDto);
-          return userDto;
-        }).orElseThrow(() -> new RuntimeException("User Not Found"));
-  }
-
-   */
 
   @Override
   public UserDto getUser(String email) {
@@ -118,7 +106,6 @@ public class UserServiceImpl implements UserService {
   public List<UserDto> getUsers(int page, int limit) {
 
     Pageable pageableRequest = PageRequest.of(page, limit);
-
 
     return userRepository.findAll(pageableRequest).getContent().stream()
         .map(userEntity -> {
@@ -168,7 +155,7 @@ public class UserServiceImpl implements UserService {
     Optional<UserEntity> user = (userRepository.findByUserId(userId));
 
     if (user.isEmpty()) {
-      throw new RuntimeException("User Not Found");
+      throw new IdNotFoundException("User Not Found");
     }
 
     if (name != null && name.length() > 0 && !Objects.equals(user.get().getFirstName(), name)) {
@@ -178,17 +165,22 @@ public class UserServiceImpl implements UserService {
     if (email != null && email.length() > 0 && !Objects.equals(user.get().getEmail(), email)) {
       Optional<UserEntity> userByEmail = userRepository.findByEmail(email);
       if (userByEmail.isPresent()) {
-        throw new RuntimeException("Email Taken");
+        throw new IdNotFoundException("Email Taken");
       }
       user.get().setEmail(email);
     }
   }
 
   @Override
+  public Long getUserIdByName(String username) {
+    return internalQuery.getIdByName(username);
+  }
+
+  @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     Optional<UserEntity> userEntity = userRepository.findByEmail(email);
     if (userEntity.isEmpty()) {
-      throw new UsernameNotFoundException(email + " Not Found");
+      throw new IdNotFoundException(email + " Not Found");
     }
     return new User(userEntity.get().getEmail(), userEntity.get().getEncryptedPassword(),
         new ArrayList<>());

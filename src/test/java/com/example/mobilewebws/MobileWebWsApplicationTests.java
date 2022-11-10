@@ -5,9 +5,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 class MobileWebWsApplicationTests {
-
+/*
 	@Test
 	void contextLoads() {
 	}
+
+ */
+
 
 }
